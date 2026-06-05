@@ -3,7 +3,7 @@ services:
     name: app-barbearia-backend
     runtime: node
     plan: free
-    buildCommand: npm install && npm run deploy:build
+    buildCommand: npm install --include=dev && npm run deploy:build
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
