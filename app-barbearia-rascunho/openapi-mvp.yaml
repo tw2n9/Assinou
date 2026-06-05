@@ -1,0 +1,960 @@
+openapi: 3.0.3
+info:
+  title: API MVP Barbearia
+  version: 1.0.0
+  description: Contrato inicial da API para o MVP do aplicativo de barbearia.
+servers:
+  - url: https://api.exemplo.com/api/v1
+    description: Producao
+  - url: http://localhost:3000/api/v1
+    description: Desenvolvimento
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Criar conta de cliente
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Conta criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autenticar usuario
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login realizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicitar recuperacao de senha
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Instrucao enviada se o e-mail existir
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Retornar usuario autenticado
+      responses:
+        "200":
+          description: Usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Buscar perfil do usuario logado
+      responses:
+        "200":
+          description: Perfil retornado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+    patch:
+      tags: [Users]
+      summary: Atualizar perfil do usuario logado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  /services:
+    get:
+      tags: [Services]
+      summary: Listar servicos
+      parameters:
+        - in: query
+          name: includeInactive
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Lista de servicos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Service"
+    post:
+      tags: [Services]
+      summary: Criar servico
+      description: Apenas admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceInput"
+      responses:
+        "201":
+          description: Servico criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /services/{id}:
+    get:
+      tags: [Services]
+      summary: Buscar servico
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Servico encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Services]
+      summary: Editar servico
+      description: Apenas admin.
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceInput"
+      responses:
+        "200":
+          description: Servico atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+    delete:
+      tags: [Services]
+      summary: Desativar servico
+      description: Exclusao logica. Apenas admin.
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Servico desativado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceResponse"
+
+  /barbers:
+    get:
+      tags: [Barbers]
+      summary: Listar barbeiros
+      responses:
+        "200":
+          description: Lista de barbeiros
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Barber"
+    post:
+      tags: [Barbers]
+      summary: Criar barbeiro
+      description: Apenas admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBarberRequest"
+      responses:
+        "201":
+          description: Barbeiro criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberResponse"
+
+  /barbers/{id}:
+    get:
+      tags: [Barbers]
+      summary: Buscar barbeiro
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Barbeiro encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberResponse"
+    patch:
+      tags: [Barbers]
+      summary: Editar barbeiro
+      description: Apenas admin.
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBarberRequest"
+      responses:
+        "200":
+          description: Barbeiro atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberResponse"
+    delete:
+      tags: [Barbers]
+      summary: Desativar barbeiro
+      description: Apenas admin.
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Barbeiro desativado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberResponse"
+
+  /schedules/availability:
+    get:
+      tags: [Schedules]
+      summary: Consultar disponibilidade
+      parameters:
+        - in: query
+          name: barberId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: serviceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Horarios disponiveis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Criar reserva
+      description: Apenas cliente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingRequest"
+      responses:
+        "201":
+          description: Reserva criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /bookings/my:
+    get:
+      tags: [Bookings]
+      summary: Listar reservas do cliente logado
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/BookingStatus"
+      responses:
+        "200":
+          description: Reservas do cliente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+
+  /bookings/admin:
+    get:
+      tags: [Bookings]
+      summary: Listar agenda geral
+      description: Apenas admin.
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: barberId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/BookingStatus"
+      responses:
+        "200":
+          description: Agenda geral
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+
+  /bookings/barber/me:
+    get:
+      tags: [Bookings]
+      summary: Listar agenda do barbeiro logado
+      description: Apenas barbeiro.
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Agenda do barbeiro
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Buscar detalhes da reserva
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Reserva encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /bookings/{id}/cancel:
+    patch:
+      tags: [Bookings]
+      summary: Cancelar reserva
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Reserva cancelada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+
+  /bookings/{id}/complete:
+    patch:
+      tags: [Bookings]
+      summary: Marcar atendimento como concluido
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Atendimento concluido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+
+  /bookings/{id}/no-show:
+    patch:
+      tags: [Bookings]
+      summary: Marcar nao comparecimento
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Nao comparecimento registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+
+  /clients:
+    get:
+      tags: [Clients]
+      summary: Listar clientes
+      description: Apenas admin.
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de clientes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Client"
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Listar notificacoes do usuario logado
+      responses:
+        "200":
+          description: Lista de notificacoes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      tags: [Notifications]
+      summary: Marcar notificacao como lida
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Notificacao lida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+
+  /settings:
+    get:
+      tags: [Settings]
+      summary: Buscar configuracoes da barbearia
+      security: []
+      responses:
+        "200":
+          description: Configuracoes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+    patch:
+      tags: [Settings]
+      summary: Atualizar configuracoes
+      description: Apenas admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Configuracoes atualizadas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Nao autenticado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Sem permissao
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Recurso nao encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflito
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Dados invalidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    UserRole:
+      type: string
+      enum: [client, barber, admin]
+
+    BookingStatus:
+      type: string
+      enum: [scheduled, confirmed, completed, canceled, no_show]
+
+    RegisterRequest:
+      type: object
+      required: [name, email, phone, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+          format: password
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+
+    AuthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            token:
+              type: string
+        message:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+
+    ServiceInput:
+      type: object
+      required: [name, price, durationMinutes]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        durationMinutes:
+          type: integer
+        isActive:
+          type: boolean
+
+    Service:
+      allOf:
+        - $ref: "#/components/schemas/ServiceInput"
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    ServiceResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Service"
+        message:
+          type: string
+
+    CreateBarberRequest:
+      type: object
+      required: [name, email, phone, password, publicName]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+        publicName:
+          type: string
+        specialty:
+          type: string
+        isActive:
+          type: boolean
+
+    UpdateBarberRequest:
+      type: object
+      properties:
+        publicName:
+          type: string
+        specialty:
+          type: string
+        photoUrl:
+          type: string
+        isActive:
+          type: boolean
+
+    Barber:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        publicName:
+          type: string
+        specialty:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+
+    BarberResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Barber"
+        message:
+          type: string
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            date:
+              type: string
+              format: date
+            barberId:
+              type: string
+              format: uuid
+            serviceId:
+              type: string
+              format: uuid
+            availableSlots:
+              type: array
+              items:
+                type: string
+                example: "09:00"
+
+    CreateBookingRequest:
+      type: object
+      required: [barberId, serviceId, date, startsAt]
+      properties:
+        barberId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        startsAt:
+          type: string
+          example: "09:00"
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        barberId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        startsAt:
+          type: string
+          example: "09:00"
+        endsAt:
+          type: string
+          example: "09:30"
+        status:
+          $ref: "#/components/schemas/BookingStatus"
+        priceSnapshot:
+          type: number
+          format: float
+
+    BookingResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Booking"
+        message:
+          type: string
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        bookingsCount:
+          type: integer
+        lastBookingAt:
+          type: string
+          format: date
+          nullable: true
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        message:
+          type: string
+        channel:
+          type: string
+          enum: [internal, email, push, whatsapp]
+        status:
+          type: string
+          enum: [pending, sent, read, failed]
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Notification"
+        message:
+          type: string
+
+    SettingsInput:
+      type: object
+      properties:
+        businessName:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        cancellationLimitMinutes:
+          type: integer
+        defaultSlotIntervalMinutes:
+          type: integer
+        cancellationPolicyText:
+          type: string
+
+    SettingsResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/SettingsInput"
+        message:
+          type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        data:
+          nullable: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
