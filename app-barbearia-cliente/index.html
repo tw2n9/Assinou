@@ -4,17 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Assinou</title>
+  <meta name="description" content="Assinou conecta clientes a barbearias cadastradas para agendar cortes, barba e serviços de beleza por cidade.">
+  <meta name="keywords" content="agendamento barbearia, barbeiro online, marcar corte, agenda para barbearia, Assinou">
+  <meta name="theme-color" content="#0f766e">
+  <meta property="og:title" content="Assinou - agendamento para barbearias">
+  <meta property="og:description" content="Encontre barbearias cadastradas na sua cidade e agende seu horário em poucos minutos.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#loginForm">Pular para login</a>
+
   <main id="authView" class="auth-shell">
+    <header class="public-header">
+      <div class="brand">
+        <span class="brand-mark">A</span>
+        <span>Assinou</span>
+      </div>
+      <nav class="public-nav" aria-label="Navegação principal">
+        <a href="#howItWorks">Como funciona</a>
+        <a href="#contact">Contato</a>
+        <a href="https://app-barbearia-admin.vercel.app">Sou barbearia</a>
+      </nav>
+    </header>
+
     <section class="hero-copy">
       <div class="brand">
         <span class="brand-mark">B</span>
         <span>Assinou</span>
+      </div>
+      <div class="hero-modern-copy">
+        <p class="eyebrow">Agendamento online para barbearias</p>
+        <h1>Encontre barbearias cadastradas e agende seu horário.</h1>
+        <p>O Assinou mostra barbearias disponíveis na sua cidade para você escolher serviço, profissional, data e horário com poucos toques.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#loginForm">Agendar agora</a>
+          <a class="button secondary light" href="https://app-barbearia-admin.vercel.app">Cadastrar minha barbearia</a>
+        </div>
       </div>
       <h1>Agende seu horário sem complicação.</h1>
       <p>Escolha serviço, barbeiro, data e horário em poucos minutos.</p>
@@ -42,6 +73,49 @@
         <p id="registerMessage" class="form-message"></p>
       </form>
     </section>
+
+    <section id="howItWorks" class="public-section" aria-labelledby="howTitle">
+      <div class="section-heading">
+        <p class="eyebrow">Como funciona</p>
+        <h2 id="howTitle">Agendamento simples para clientes e barbearias</h2>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <strong>Busque por cidade</strong>
+          <span>O cliente vê somente barbearias cadastradas no Assinou.</span>
+        </article>
+        <article class="feature-card">
+          <strong>Escolha o serviço</strong>
+          <span>Serviços, preços e duração são definidos por cada barbearia.</span>
+        </article>
+        <article class="feature-card">
+          <strong>Confirme o horário</strong>
+          <span>A agenda considera disponibilidade real dos barbeiros.</span>
+        </article>
+      </div>
+    </section>
+
+    <footer id="contact" class="public-footer">
+      <div>
+        <strong>Assinou</strong>
+        <p>Plataforma de agendamento para barbearias cadastradas.</p>
+      </div>
+      <address>
+        <a href="mailto:contato@assinou.com.br">contato@assinou.com.br</a>
+        <a href="tel:+5500000000000">+55 00 00000-0000</a>
+        <a href="https://instagram.com/assinou.app" target="_blank" rel="noreferrer">Instagram</a>
+      </address>
+      <div class="legal-links">
+        <details>
+          <summary>Política de Privacidade</summary>
+          <p>Coletamos dados necessários para cadastro, autenticação e agendamento. As informações são usadas para operar o serviço, exibir reservas e permitir contato entre cliente e barbearia, conforme a LGPD.</p>
+        </details>
+        <details>
+          <summary>Termos de Uso</summary>
+          <p>Ao usar o Assinou, clientes e barbearias concordam em fornecer informações verdadeiras, respeitar horários cadastrados e utilizar a plataforma apenas para fins relacionados a agendamentos.</p>
+        </details>
+      </div>
+    </footer>
   </main>
 
   <main id="appView" class="app-shell hidden">
@@ -166,6 +240,16 @@
       <button class="bottom-item" data-view-target="profile">Perfil</button>
     </nav>
   </main>
+
+  <a class="whatsapp-float" href="https://wa.me/5500000000000?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Assinou" target="_blank" rel="noreferrer" aria-label="Falar com o Assinou pelo WhatsApp">WhatsApp</a>
+
+  <section id="cookieBanner" class="cookie-banner" aria-live="polite">
+    <p>Usamos cookies essenciais para manter sua sessão e melhorar a experiência no Assinou.</p>
+    <div>
+      <button id="rejectCookies" class="button secondary" type="button">Recusar</button>
+      <button id="acceptCookies" class="button primary" type="button">Aceitar</button>
+    </div>
+  </section>
 
   <script src="config.js"></script>
   <script src="script.js"></script>

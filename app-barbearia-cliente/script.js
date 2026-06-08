@@ -1,4 +1,5 @@
 const API_URL = window.BARBEARIA_API_URL || localStorage.getItem("barbearia_api_url") || "http://localhost:3000/api/v1";
+const WHATSAPP_URL = window.ASSINOU_WHATSAPP_URL || "https://wa.me/5500000000000?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Assinou";
 
 const state = {
   token: localStorage.getItem("barbearia_cliente_token"),
@@ -456,5 +457,26 @@ document.querySelector("#profileForm").addEventListener("submit", async (event) 
 });
 
 document.querySelector("#logoutButton").addEventListener("click", logout);
+
+const whatsappLink = document.querySelector(".whatsapp-float");
+if (whatsappLink) {
+  whatsappLink.href = WHATSAPP_URL;
+}
+
+const cookieBanner = document.querySelector("#cookieBanner");
+const cookieChoice = localStorage.getItem("assinou_cookie_choice");
+if (cookieBanner && !cookieChoice) {
+  cookieBanner.classList.add("show");
+}
+
+document.querySelector("#acceptCookies")?.addEventListener("click", () => {
+  localStorage.setItem("assinou_cookie_choice", "accepted");
+  cookieBanner?.classList.remove("show");
+});
+
+document.querySelector("#rejectCookies")?.addEventListener("click", () => {
+  localStorage.setItem("assinou_cookie_choice", "rejected");
+  cookieBanner?.classList.remove("show");
+});
 
 updateAuthView();
