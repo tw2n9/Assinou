@@ -16,6 +16,7 @@ const el = {
   loginView: document.querySelector("#loginView"),
   appView: document.querySelector("#appView"),
   loginForm: document.querySelector("#loginForm"),
+  ownerRegisterForm: document.querySelector("#ownerRegisterForm"),
   loginMessage: document.querySelector("#loginMessage"),
   sectionTitle: document.querySelector("#sectionTitle"),
   sectionEyebrow: document.querySelector("#sectionEyebrow"),
@@ -57,6 +58,12 @@ function setApiStatus(ok, text) {
 function showMessage(target, message, isError = false) {
   target.textContent = message;
   target.classList.toggle("error", isError);
+}
+
+function setAuthTab(tab) {
+  document.querySelectorAll(".tab").forEach((button) => button.classList.toggle("active", button.dataset.authTab === tab));
+  el.loginForm.classList.toggle("auth-form-hidden", tab !== "login");
+  el.ownerRegisterForm.classList.toggle("auth-form-hidden", tab !== "register");
 }
 
 function setView(viewId) {
@@ -333,6 +340,10 @@ function resetBarbershopForm() {
   showMessage(document.querySelector("#barbershopMessage"), "");
 }
 
+document.querySelectorAll(".tab").forEach((button) => {
+  button.addEventListener("click", () => setAuthTab(button.dataset.authTab));
+});
+
 el.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   showMessage(el.loginMessage, "Entrando...");
@@ -356,6 +367,38 @@ el.loginForm.addEventListener("submit", async (event) => {
     ensureLoggedIn();
   } catch (error) {
     showMessage(el.loginMessage, error.message, true);
+  }
+});
+
+el.ownerRegisterForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = document.querySelector("#ownerRegisterMessage");
+  showMessage(message, "Criando conta...");
+
+  try {
+    const response = await api("/auth/register-owner", {
+      method: "POST",
+      body: JSON.stringify({
+        name: document.querySelector("#ownerName").value,
+        email: document.querySelector("#ownerEmail").value,
+        phone: document.querySelector("#ownerPhone").value,
+        password: document.querySelector("#ownerPassword").value,
+        barbershopName: document.querySelector("#ownerShopName").value,
+        city: document.querySelector("#ownerShopCity").value,
+        state: document.querySelector("#ownerShopState").value.toUpperCase(),
+        barbershopPhone: document.querySelector("#ownerShopPhone").value || null,
+        address: document.querySelector("#ownerShopAddress").value || null
+      })
+    });
+
+    state.token = response.data.token;
+    state.user = response.data.user;
+    state.activeBarbershopId = response.data.barbershopId || "";
+    localStorage.setItem("barbearia_admin_token", state.token);
+    localStorage.setItem("barbearia_admin_active_shop", state.activeBarbershopId);
+    ensureLoggedIn();
+  } catch (error) {
+    showMessage(message, error.message, true);
   }
 });
 

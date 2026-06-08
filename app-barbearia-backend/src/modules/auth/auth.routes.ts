@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "../../utils/async-handler";
-import { login, register, registerBarber } from "./auth.service";
+import { login, register, registerBarber, registerOwner } from "./auth.service";
 import { requireAuth } from "../../middleware/auth";
 import { query } from "../../database/pool";
 import type { AuthUser } from "../../types/user";
@@ -21,6 +21,14 @@ const registerBarberSchema = registerSchema.extend({
   specialty: z.string().optional().nullable()
 });
 
+const registerOwnerSchema = registerSchema.extend({
+  barbershopName: z.string().min(2),
+  city: z.string().min(2),
+  state: z.string().min(2).max(2),
+  address: z.string().optional().nullable(),
+  barbershopPhone: z.string().optional().nullable()
+});
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1)
@@ -36,6 +44,12 @@ authRoutes.post("/register-barber", asyncHandler(async (req, res) => {
   const payload = registerBarberSchema.parse(req.body);
   const data = await registerBarber(payload);
   res.status(201).json({ data, message: "Conta de barbeiro criada com sucesso" });
+}));
+
+authRoutes.post("/register-owner", asyncHandler(async (req, res) => {
+  const payload = registerOwnerSchema.parse(req.body);
+  const data = await registerOwner(payload);
+  res.status(201).json({ data, message: "Conta da barbearia criada com sucesso" });
 }));
 
 authRoutes.post("/login", loginRateLimit, asyncHandler(async (req, res) => {

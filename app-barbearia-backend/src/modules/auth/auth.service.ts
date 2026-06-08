@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { query } from "../../database/pool";
+import { pool, query } from "../../database/pool";
 import { env } from "../../config/env";
 import type { AuthUser, UserRole } from "../../types/user";
 import { HttpError } from "../../utils/http-error";
@@ -15,6 +15,14 @@ type RegisterInput = {
 type RegisterBarberInput = RegisterInput & {
   publicName: string;
   specialty?: string | null;
+};
+
+type RegisterOwnerInput = RegisterInput & {
+  barbershopName: string;
+  city: string;
+  state: string;
+  address?: string | null;
+  barbershopPhone?: string | null;
 };
 
 type LoginInput = {
@@ -95,6 +103,70 @@ export async function registerBarber(input: RegisterBarberInput) {
     user: toPublicUser(user),
     token: signToken(user)
   };
+}
+
+export async function registerOwner(input: RegisterOwnerInput) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const databaseQuery = <T extends Record<string, unknown>>(sql: string, params: unknown[] = []) => client.query<T>(sql, params);
+
+    const existing = await databaseQuery("SELECT id FROM users WHERE email = $1", [input.email]);
+    if (existing.rowCount) {
+      throw new HttpError(409, "USER_EMAIL_ALREADY_EXISTS", "E-mail ja cadastrado");
+    }
+
+    const barbershopResult = await databaseQuery<{ id: string }>(
+      `INSERT INTO barbershops (name, city, state, address, phone, is_active)
+       VALUES ($1, $2, upper($3), $4, $5, true)
+       RETURNING id`,
+      [
+        input.barbershopName,
+        input.city,
+        input.state,
+        input.address ?? null,
+        input.barbershopPhone ?? input.phone
+      ]
+    );
+    const barbershopId = barbershopResult.rows[0].id;
+
+    await databaseQuery(
+      `INSERT INTO settings (barbershop_id, business_name, phone, address, cancellation_limit_minutes, default_slot_interval_minutes, cancellation_policy_text)
+       VALUES ($1, $2, $3, $4, 120, 30, 'Cancelamentos permitidos ate 2 horas antes do horario.')`,
+      [barbershopId, input.barbershopName, input.barbershopPhone ?? input.phone, input.address ?? null]
+    );
+
+    for (const weekday of [1, 2, 3, 4, 5, 6]) {
+      await databaseQuery(
+        `INSERT INTO business_hours (barbershop_id, weekday, opens_at, closes_at, is_active)
+         VALUES ($1, $2, '09:00', '19:00', true)`,
+        [barbershopId, weekday]
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(input.password, 10);
+    const userResult = await databaseQuery<AuthUser>(
+      `INSERT INTO users (barbershop_id, name, email, phone, password_hash, role)
+       VALUES ($1, $2, $3, $4, $5, 'admin')
+       RETURNING id, name, email, phone, role, is_active`,
+      [barbershopId, input.name, input.email, input.phone, passwordHash]
+    );
+
+    await client.query("COMMIT");
+
+    const user = userResult.rows[0];
+    return {
+      user: toPublicUser(user),
+      token: signToken(user),
+      barbershopId
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function login(input: LoginInput) {

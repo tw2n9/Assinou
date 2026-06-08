@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Admin - Barbearia</title>
+  <title>Painel Admin - Assinou</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,9 +15,14 @@
       <div class="brand-lockup">
         <span class="brand-mark">B</span>
         <div>
-          <strong>Barbearia MVP</strong>
-          <span>Painel administrativo</span>
+          <strong>Assinou</strong>
+          <span>Painel da barbearia</span>
         </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-auth-tab="login" type="button">Entrar</button>
+        <button class="tab" data-auth-tab="register" type="button">Criar conta</button>
       </div>
 
       <form id="loginForm" class="login-form">
@@ -26,16 +31,39 @@
 
         <label>
           E-mail
-          <input id="loginEmail" type="email" value="admin@barbearia.local" required>
+          <input id="loginEmail" type="email" required>
         </label>
 
         <label>
           Senha
-          <input id="loginPassword" type="password" value="admin123" required>
+          <input id="loginPassword" type="password" required>
         </label>
 
         <button class="button primary" type="submit">Entrar</button>
         <p id="loginMessage" class="form-message"></p>
+      </form>
+
+      <form id="ownerRegisterForm" class="login-form auth-form-hidden">
+        <h1>Criar conta</h1>
+        <p>Cadastre sua barbearia e comece a configurar serviços, equipe e horários.</p>
+
+        <label>Seu nome<input id="ownerName" required></label>
+        <label>E-mail<input id="ownerEmail" type="email" required></label>
+        <label>Telefone<input id="ownerPhone" required></label>
+        <label>Senha<input id="ownerPassword" type="password" minlength="6" required></label>
+
+        <div class="form-divider"></div>
+
+        <label>Nome da barbearia<input id="ownerShopName" required></label>
+        <div class="two-cols">
+          <label>Cidade<input id="ownerShopCity" required></label>
+          <label>UF<input id="ownerShopState" maxlength="2" required></label>
+        </div>
+        <label>Telefone da barbearia<input id="ownerShopPhone"></label>
+        <label>Endereço<textarea id="ownerShopAddress" rows="3"></textarea></label>
+
+        <button class="button primary" type="submit">Criar conta</button>
+        <p id="ownerRegisterMessage" class="form-message"></p>
       </form>
     </section>
   </main>
@@ -45,7 +73,7 @@
       <div class="brand-lockup compact">
         <span class="brand-mark">B</span>
         <div>
-          <strong>Barbearia</strong>
+          <strong>Assinou</strong>
           <span>Admin</span>
         </div>
       </div>
