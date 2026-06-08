@@ -37,6 +37,51 @@ a {
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: ease;
+}
+
+::view-transition-old(root) {
+  animation-name: fade-in;
+  animation-direction: reverse;
+}
+
+::view-transition-new(root) {
+  animation-name: fade-in;
+}
+
 button,
 input {
   font: inherit;
@@ -104,6 +149,15 @@ input {
   color: rgba(255, 255, 255, 0.88);
   text-decoration: none;
   font-weight: 800;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.public-nav a:hover,
+.public-nav a:focus-visible {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .hero-copy {
@@ -127,6 +181,7 @@ input {
   font-size: clamp(2.8rem, 8vw, 5.8rem);
   line-height: 0.96;
   letter-spacing: 0;
+  animation: slide-up 520ms ease-out both;
 }
 
 .hero-modern-copy p {
@@ -134,6 +189,7 @@ input {
   color: rgba(255, 255, 255, 0.78);
   font-size: 1.1rem;
   line-height: 1.7;
+  animation: slide-up 520ms ease-out 80ms both;
 }
 
 .hero-actions {
@@ -141,6 +197,7 @@ input {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 24px;
+  animation: slide-up 520ms ease-out 160ms both;
 }
 
 .button.light {
@@ -165,6 +222,11 @@ input {
   border-radius: 8px;
   color: #fff;
   background: var(--accent);
+  transition: transform 220ms ease, background 220ms ease;
+}
+
+.brand:hover .brand-mark {
+  transform: rotate(-3deg) scale(1.04);
 }
 
 .auth-panel,
@@ -181,6 +243,7 @@ input {
   padding: 22px;
   box-shadow: var(--shadow);
   align-self: center;
+  animation: slide-up 520ms ease-out 120ms both;
 }
 
 .tabs {
@@ -201,11 +264,16 @@ input {
   background: transparent;
   font-weight: 800;
   cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
 .tab.active {
   color: var(--ink);
   background: #fff;
+}
+
+.tab:hover {
+  transform: translateY(-1px);
 }
 
 .auth-form,
@@ -236,11 +304,13 @@ input {
   padding: 0 12px;
   color: var(--ink);
   background: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 input:focus {
   outline: 3px solid rgba(15, 118, 110, 0.16);
   border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .button {
@@ -254,6 +324,7 @@ input:focus {
   font-weight: 800;
   cursor: pointer;
   text-decoration: none;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .button.primary {
@@ -263,6 +334,7 @@ input:focus {
 
 .button.primary:hover {
   background: var(--accent-dark);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.2);
 }
 
 .button.secondary {
@@ -301,6 +373,13 @@ input:focus {
   padding: 18px;
   background: rgba(255, 255, 255, 0.09);
   backdrop-filter: blur(10px);
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+}
+
+.feature-card:hover {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-3px);
 }
 
 .feature-card span {
@@ -364,6 +443,13 @@ address a,
   box-shadow: 0 12px 30px rgba(18, 140, 126, 0.28);
   text-decoration: none;
   font-weight: 800;
+  animation: soft-float 3.6s ease-in-out infinite;
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.whatsapp-float:hover {
+  background: #0f7f73;
+  box-shadow: 0 16px 34px rgba(18, 140, 126, 0.36);
 }
 
 .cookie-banner {
@@ -387,6 +473,7 @@ address a,
 
 .cookie-banner.show {
   display: grid;
+  animation: slide-up 240ms ease-out;
 }
 
 .cookie-banner p {
@@ -606,6 +693,30 @@ h2 {
   transform: translateY(-1px);
 }
 
+.highlight-card,
+.action-card,
+.reservation-card,
+.panel {
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.highlight-card:hover,
+.action-card:hover,
+.reservation-card:hover,
+.panel:hover {
+  border-color: rgba(15, 118, 110, 0.2);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.06);
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.scroll-reveal.revealed {
+  animation: slide-up 520ms ease-out both;
+}
+
 .select-card.active {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
@@ -765,6 +876,12 @@ dd {
   *::before,
   *::after {
     animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
   }
 }

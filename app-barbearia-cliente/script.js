@@ -50,10 +50,21 @@ function money(value) {
   return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function runViewTransition(callback) {
+  if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.startViewTransition(callback);
+    return;
+  }
+
+  callback();
+}
+
 function setAuthTab(tab) {
-  document.querySelectorAll(".tab").forEach((button) => button.classList.toggle("active", button.dataset.authTab === tab));
-  document.querySelectorAll(".auth-form").forEach((form) => form.classList.remove("active"));
-  document.querySelector(`#${tab}Form`).classList.add("active");
+  runViewTransition(() => {
+    document.querySelectorAll(".tab").forEach((button) => button.classList.toggle("active", button.dataset.authTab === tab));
+    document.querySelectorAll(".auth-form").forEach((form) => form.classList.remove("active"));
+    document.querySelector(`#${tab}Form`).classList.add("active");
+  });
 }
 
 function setView(view) {
@@ -62,10 +73,12 @@ function setView(view) {
     view = "home";
   }
 
-  document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
-  document.querySelector(`#${view}`).classList.add("active");
-  document.querySelectorAll("[data-view-target]").forEach((item) => {
-    item.classList.toggle("active", item.dataset.viewTarget === view);
+  runViewTransition(() => {
+    document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
+    document.querySelector(`#${view}`).classList.add("active");
+    document.querySelectorAll("[data-view-target]").forEach((item) => {
+      item.classList.toggle("active", item.dataset.viewTarget === view);
+    });
   });
 
   if (view === "reservations") loadReservations();
@@ -478,5 +491,22 @@ document.querySelector("#rejectCookies")?.addEventListener("click", () => {
   localStorage.setItem("assinou_cookie_choice", "rejected");
   cookieBanner?.classList.remove("show");
 });
+
+const revealTargets = document.querySelectorAll(".public-section, .feature-card, .public-footer, .finder-panel, .quick-actions");
+if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  revealTargets.forEach((element) => element.classList.add("scroll-reveal"));
+
+  const revealObserver = new IntersectionObserver((entries, observer) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add("revealed");
+      observer.unobserve(entry.target);
+    }
+  }, { threshold: 0.18 });
+
+  revealTargets.forEach((element) => revealObserver.observe(element));
+} else {
+  revealTargets.forEach((element) => element.classList.add("revealed"));
+}
 
 updateAuthView();
