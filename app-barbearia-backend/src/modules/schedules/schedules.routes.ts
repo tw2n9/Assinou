@@ -24,6 +24,7 @@ const barberHourSchema = z.object({
 });
 
 const blockSchema = z.object({
+  barbershopId: z.string().uuid().optional(),
   barberId: z.string().uuid().nullable().optional(),
   date: z.string(),
   startsAt: z.string(),
@@ -40,27 +41,41 @@ async function getCurrentBarberId(userId: string) {
   return result.rows[0]?.id ?? null;
 }
 
-scheduleRoutes.get("/business-hours", requireRole("admin"), asyncHandler(async (_req, res) => {
+async function getAdminBarbershopId(userId: string, requestedId?: string) {
+  if (requestedId) return requestedId;
+  const result = await query<{ id: string }>(
+    "SELECT COALESCE(barbershop_id, (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)) AS id FROM users WHERE id = $1",
+    [userId]
+  );
+  return result.rows[0]?.id ?? null;
+}
+
+scheduleRoutes.get("/business-hours", requireRole("admin"), asyncHandler(async (req, res) => {
+  const barbershopId = await getAdminBarbershopId(req.user!.id, typeof req.query.barbershopId === "string" ? req.query.barbershopId : undefined);
   const result = await query(
     `SELECT weekday, opens_at AS "opensAt", closes_at AS "closesAt", is_active AS "isActive"
-     FROM business_hours ORDER BY weekday`
+     FROM business_hours
+     WHERE barbershop_id = $1
+     ORDER BY weekday`,
+    [barbershopId]
   );
   res.json({ data: result.rows });
 }));
 
 scheduleRoutes.put("/business-hours", requireRole("admin"), asyncHandler(async (req, res) => {
-  const payload = z.object({ hours: z.array(hourSchema) }).parse(req.body);
+  const payload = z.object({ barbershopId: z.string().uuid().optional(), hours: z.array(hourSchema) }).parse(req.body);
+  const barbershopId = await getAdminBarbershopId(req.user!.id, payload.barbershopId);
 
   for (const hour of payload.hours) {
     await query(
-      `INSERT INTO business_hours (weekday, opens_at, closes_at, is_active)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (weekday)
+      `INSERT INTO business_hours (barbershop_id, weekday, opens_at, closes_at, is_active)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (barbershop_id, weekday)
        DO UPDATE SET opens_at = EXCLUDED.opens_at,
                      closes_at = EXCLUDED.closes_at,
                      is_active = EXCLUDED.is_active,
                      updated_at = now()`,
-      [hour.weekday, hour.opensAt, hour.closesAt, hour.isActive ?? true]
+      [barbershopId, hour.weekday, hour.opensAt, hour.closesAt, hour.isActive ?? true]
     );
   }
 

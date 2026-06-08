@@ -9,6 +9,7 @@ import { HttpError } from "../../utils/http-error";
 export const barberRoutes = Router();
 
 const createBarberSchema = z.object({
+  barbershopId: z.string().uuid().optional(),
   name: z.string().min(2),
   email: z.string().email(),
   phone: z.string().min(8),
@@ -96,23 +97,26 @@ barberRoutes.post("/", requireRole("admin"), asyncHandler(async (req, res) => {
   if (existing.rowCount) throw new HttpError(409, "USER_EMAIL_ALREADY_EXISTS", "E-mail ja cadastrado");
 
   const passwordHash = await bcrypt.hash(payload.password, 10);
+  const barbershopIdResult = await query<{ id: string }>(
+    `SELECT COALESCE($1::uuid, (SELECT barbershop_id FROM users WHERE id = $2), (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)) AS id`,
+    [payload.barbershopId ?? null, req.user!.id]
+  );
+  const barbershopId = barbershopIdResult.rows[0].id;
+
   const userResult = await query<{ id: string }>(
-    `INSERT INTO users (name, email, phone, password_hash, role)
-     VALUES ($1, $2, $3, $4, 'barber')
+    `INSERT INTO users (barbershop_id, name, email, phone, password_hash, role)
+     VALUES ($1, $2, $3, $4, $5, 'barber')
      RETURNING id`,
-    [payload.name, payload.email, payload.phone, passwordHash]
+    [barbershopId, payload.name, payload.email, payload.phone, passwordHash]
   );
 
   const result = await query(
     `INSERT INTO barbers (barbershop_id, user_id, public_name, specialty, is_active)
-     VALUES (
-       COALESCE((SELECT barbershop_id FROM users WHERE id = $1), (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)),
-       $2, $3, $4, $5
-     )
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id, user_id AS "userId", public_name AS "publicName", specialty, photo_url AS "photoUrl",
                default_service_duration_minutes AS "defaultServiceDurationMinutes",
                is_active AS "isActive"`,
-    [req.user!.id, userResult.rows[0].id, payload.publicName, payload.specialty ?? null, payload.isActive ?? true]
+    [barbershopId, userResult.rows[0].id, payload.publicName, payload.specialty ?? null, payload.isActive ?? true]
   );
 
   res.status(201).json({ data: result.rows[0], message: "Barbeiro criado" });

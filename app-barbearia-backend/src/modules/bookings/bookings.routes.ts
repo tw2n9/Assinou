@@ -53,8 +53,9 @@ bookingRoutes.get("/admin", requireRole("admin"), asyncHandler(async (req, res) 
      WHERE ($1::date IS NULL OR b.date = $1)
        AND ($2::uuid IS NULL OR b.barber_id = $2)
        AND ($3::text IS NULL OR b.status::text = $3)
+       AND ($4::uuid IS NULL OR b.barbershop_id = $4)
      ORDER BY b.date, b.starts_at`,
-    [req.query.date ?? null, req.query.barberId ?? null, req.query.status ?? null]
+    [req.query.date ?? null, req.query.barberId ?? null, req.query.status ?? null, req.query.barbershopId ?? null]
   );
   res.json({ data: result.rows });
 }));

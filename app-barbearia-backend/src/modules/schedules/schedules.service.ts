@@ -10,6 +10,7 @@ type AvailabilityInput = {
 };
 
 type CreateScheduleBlockInput = {
+  barbershopId?: string;
   barberId?: string | null;
   date: string;
   startsAt: string;
@@ -104,8 +105,8 @@ export async function createScheduleBlock(input: CreateScheduleBlockInput) {
   const barbershopResult = await query<{ id: string }>(
     input.barberId
       ? "SELECT barbershop_id AS id FROM barbers WHERE id = $1"
-      : "SELECT id FROM barbershops ORDER BY created_at LIMIT 1",
-    input.barberId ? [input.barberId] : []
+      : "SELECT COALESCE($1::uuid, (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)) AS id",
+    input.barberId ? [input.barberId] : [input.barbershopId ?? null]
   );
   const barbershopId = barbershopResult.rows[0]?.id;
   if (!barbershopId) throw new HttpError(404, "BARBERSHOP_NOT_FOUND", "Barbearia nao encontrada");

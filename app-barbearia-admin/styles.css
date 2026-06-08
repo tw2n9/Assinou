@@ -257,7 +257,7 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: 40px;
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -287,6 +287,12 @@ textarea:focus {
   animation: view-in 220ms ease-out;
 }
 
+.api-status select {
+  min-width: 220px;
+  min-height: 34px;
+  padding: 0 8px;
+}
+
 .login-panel,
 .panel,
 .metric-card {
@@ -295,7 +301,7 @@ textarea:focus {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
   margin-bottom: 18px;
 }

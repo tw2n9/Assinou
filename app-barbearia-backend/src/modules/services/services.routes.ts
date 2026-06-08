@@ -8,6 +8,7 @@ import { HttpError } from "../../utils/http-error";
 export const serviceRoutes = Router();
 
 const serviceSchema = z.object({
+  barbershopId: z.string().uuid().optional(),
   name: z.string().min(2),
   description: z.string().optional().nullable(),
   price: z.number().nonnegative(),
@@ -36,11 +37,11 @@ serviceRoutes.post("/", requireRole("admin"), asyncHandler(async (req, res) => {
   const result = await query(
     `INSERT INTO services (barbershop_id, name, description, price, duration_minutes, is_active)
      VALUES (
-       COALESCE((SELECT barbershop_id FROM users WHERE id = $1), (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)),
-       $2, $3, $4, $5, $6
+       COALESCE($1::uuid, (SELECT barbershop_id FROM users WHERE id = $2), (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)),
+       $3, $4, $5, $6, $7
      )
      RETURNING id, name, description, price::float, duration_minutes AS "durationMinutes", is_active AS "isActive"`,
-    [req.user!.id, payload.name, payload.description ?? null, payload.price, payload.durationMinutes, payload.isActive ?? true]
+    [payload.barbershopId ?? null, req.user!.id, payload.name, payload.description ?? null, payload.price, payload.durationMinutes, payload.isActive ?? true]
   );
   res.status(201).json({ data: result.rows[0], message: "Servico criado" });
 }));

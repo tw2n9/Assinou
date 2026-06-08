@@ -15,7 +15,8 @@ const settingsSchema = z.object({
   cancellationPolicyText: z.string().optional().nullable()
 });
 
-settingsRoutes.get("/", asyncHandler(async (_req, res) => {
+settingsRoutes.get("/", asyncHandler(async (req, res) => {
+  const barbershopId = typeof req.query.barbershopId === "string" ? req.query.barbershopId : null;
   const result = await query(
     `SELECT business_name AS "businessName",
             phone,
@@ -24,14 +25,16 @@ settingsRoutes.get("/", asyncHandler(async (_req, res) => {
             default_slot_interval_minutes AS "defaultSlotIntervalMinutes",
             cancellation_policy_text AS "cancellationPolicyText"
      FROM settings
+     WHERE ($1::uuid IS NULL OR barbershop_id = $1)
      ORDER BY created_at
-     LIMIT 1`
+     LIMIT 1`,
+    [barbershopId]
   );
   res.json({ data: result.rows[0] ?? null });
 }));
 
 settingsRoutes.patch("/", requireAuth, requireRole("admin"), asyncHandler(async (req, res) => {
-  const payload = settingsSchema.parse(req.body);
+  const payload = settingsSchema.extend({ barbershopId: z.string().uuid().optional() }).parse(req.body);
   const result = await query(
     `UPDATE settings
      SET business_name = COALESCE($1, business_name),
@@ -41,7 +44,12 @@ settingsRoutes.patch("/", requireAuth, requireRole("admin"), asyncHandler(async 
          default_slot_interval_minutes = COALESCE($5, default_slot_interval_minutes),
          cancellation_policy_text = COALESCE($6, cancellation_policy_text),
          updated_at = now()
-     WHERE id = (SELECT id FROM settings ORDER BY created_at LIMIT 1)
+     WHERE id = (
+       SELECT id FROM settings
+       WHERE ($7::uuid IS NULL OR barbershop_id = $7)
+       ORDER BY created_at
+       LIMIT 1
+     )
      RETURNING business_name AS "businessName",
                phone,
                address,
@@ -54,7 +62,8 @@ settingsRoutes.patch("/", requireAuth, requireRole("admin"), asyncHandler(async 
       payload.address,
       payload.cancellationLimitMinutes,
       payload.defaultSlotIntervalMinutes,
-      payload.cancellationPolicyText
+      payload.cancellationPolicyText,
+      payload.barbershopId ?? null
     ]
   );
   res.json({ data: result.rows[0], message: "Configuracoes atualizadas" });

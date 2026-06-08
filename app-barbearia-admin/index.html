@@ -53,6 +53,7 @@
       <nav class="nav-list" aria-label="Menu administrativo">
         <button class="nav-item active" data-view="dashboard">Dashboard</button>
         <button class="nav-item" data-view="agenda">Agenda</button>
+        <button class="nav-item" data-view="barbearias">Barbearias</button>
         <button class="nav-item" data-view="servicos">Serviços</button>
         <button class="nav-item" data-view="barbeiros">Barbeiros</button>
         <button class="nav-item" data-view="horarios">Horários</button>
@@ -69,6 +70,7 @@
           <h1 id="sectionTitle">Dashboard</h1>
         </div>
         <div class="api-status">
+          <select id="activeBarbershop" title="Barbearia ativa"></select>
           <span id="statusDot" class="status-dot"></span>
           <span id="apiStatusText">API conectada</span>
         </div>
@@ -76,6 +78,10 @@
 
       <section id="dashboard" class="view active">
         <div class="metric-grid">
+          <article class="metric-card">
+            <span>Barbearias</span>
+            <strong id="metricBarbershops">0</strong>
+          </article>
           <article class="metric-card">
             <span>Serviços</span>
             <strong id="metricServices">0</strong>
@@ -121,6 +127,43 @@
           </div>
           <div id="agendaTable" class="table-wrap"></div>
         </section>
+      </section>
+
+      <section id="barbearias" class="view">
+        <div class="split-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Barbearias cadastradas</h2>
+                <p>Somente estas barbearias aparecem para os clientes.</p>
+              </div>
+              <button id="refreshBarbershops" class="button secondary" type="button">Atualizar</button>
+            </div>
+            <div id="barbershopsTable" class="table-wrap"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header compact-header">
+              <h2 id="barbershopFormTitle">Nova barbearia</h2>
+            </div>
+            <form id="barbershopForm" class="stack-form">
+              <input id="barbershopId" type="hidden">
+              <label>Nome<input id="barbershopName" required></label>
+              <div class="two-cols">
+                <label>Cidade<input id="barbershopCity" required></label>
+                <label>UF<input id="barbershopState" maxlength="2" required></label>
+              </div>
+              <label>Telefone<input id="barbershopPhone"></label>
+              <label>Endereço<textarea id="barbershopAddress" rows="3"></textarea></label>
+              <label class="check-row"><input id="barbershopActive" type="checkbox" checked> Ativa</label>
+              <div class="form-actions">
+                <button class="button primary" type="submit">Salvar</button>
+                <button id="clearBarbershopForm" class="button secondary" type="button">Limpar</button>
+              </div>
+              <p id="barbershopMessage" class="form-message"></p>
+            </form>
+          </section>
+        </div>
       </section>
 
       <section id="servicos" class="view">

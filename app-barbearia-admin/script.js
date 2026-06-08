@@ -2,6 +2,8 @@ const API_URL = window.BARBEARIA_API_URL || localStorage.getItem("barbearia_api_
 const state = {
   token: localStorage.getItem("barbearia_admin_token"),
   user: null,
+  barbershops: [],
+  activeBarbershopId: localStorage.getItem("barbearia_admin_active_shop") || "",
   services: [],
   barbers: [],
   bookings: [],
@@ -65,6 +67,7 @@ function setView(viewId) {
   const labels = {
     dashboard: ["Operação", "Dashboard"],
     agenda: ["Reservas", "Agenda geral"],
+    barbearias: ["Rede", "Barbearias"],
     servicos: ["Catálogo", "Serviços"],
     barbeiros: ["Equipe", "Barbeiros"],
     horarios: ["Disponibilidade", "Horários"],
@@ -97,6 +100,7 @@ async function initializeApp() {
 async function loadAll() {
   try {
     setApiStatus(true, "API conectada");
+    await loadBarbershops();
     await Promise.all([loadServices(), loadBarbers(), loadSettings(), loadBusinessHours()]);
     await loadAgenda(today(), "");
     renderMetrics();
@@ -106,8 +110,45 @@ async function loadAll() {
   }
 }
 
+async function loadBarbershops() {
+  const response = await api("/barbershops?includeInactive=true");
+  state.barbershops = response.data || [];
+
+  if (!state.activeBarbershopId && state.barbershops[0]) {
+    state.activeBarbershopId = state.barbershops[0].id;
+    localStorage.setItem("barbearia_admin_active_shop", state.activeBarbershopId);
+  }
+
+  renderBarbershops();
+  fillActiveBarbershopSelect();
+}
+
+function renderBarbershops() {
+  document.querySelector("#barbershopsTable").innerHTML = renderTable({
+    columns: ["Nome", "Cidade", "Telefone", "Status", "Ações"],
+    rows: state.barbershops.map((shop) => [
+      shop.name,
+      `${shop.city} - ${shop.state}`,
+      shop.phone || "-",
+      activeBadge(shop.isActive),
+      `<button class="table-action" data-edit-barbershop="${shop.id}">Editar</button>`
+    ]),
+    empty: "Nenhuma barbearia cadastrada."
+  });
+  document.querySelector("#metricBarbershops").textContent = state.barbershops.length;
+}
+
+function fillActiveBarbershopSelect() {
+  const select = document.querySelector("#activeBarbershop");
+  select.innerHTML = state.barbershops.map((shop) => `
+    <option value="${shop.id}" ${shop.id === state.activeBarbershopId ? "selected" : ""}>${shop.name} - ${shop.city}</option>
+  `).join("");
+}
+
 async function loadServices() {
-  const response = await api("/services?includeInactive=true");
+  const params = new URLSearchParams({ includeInactive: "true" });
+  if (state.activeBarbershopId) params.set("barbershopId", state.activeBarbershopId);
+  const response = await api(`/services?${params.toString()}`);
   state.services = response.data || [];
   renderServices();
 }
@@ -127,7 +168,9 @@ function renderServices() {
 }
 
 async function loadBarbers() {
-  const response = await api("/barbers?includeInactive=true");
+  const params = new URLSearchParams({ includeInactive: "true" });
+  if (state.activeBarbershopId) params.set("barbershopId", state.activeBarbershopId);
+  const response = await api(`/barbers?${params.toString()}`);
   state.barbers = response.data || [];
   renderBarbers();
   fillBarberSelects();
@@ -162,6 +205,7 @@ async function loadAgenda(date = today(), barberId = "") {
   const params = new URLSearchParams();
   if (date) params.set("date", date);
   if (barberId) params.set("barberId", barberId);
+  if (state.activeBarbershopId) params.set("barbershopId", state.activeBarbershopId);
 
   const response = await api(`/bookings/admin?${params.toString()}`);
   state.bookings = response.data || [];
@@ -193,7 +237,9 @@ function renderBookingsTable(bookings) {
 }
 
 async function loadSettings() {
-  const response = await api("/settings");
+  const params = new URLSearchParams();
+  if (state.activeBarbershopId) params.set("barbershopId", state.activeBarbershopId);
+  const response = await api(`/settings?${params.toString()}`);
   state.settings = response.data;
   const settings = state.settings || {};
   document.querySelector("#businessName").value = settings.businessName || "";
@@ -205,7 +251,9 @@ async function loadSettings() {
 }
 
 async function loadBusinessHours() {
-  const response = await api("/schedules/business-hours");
+  const params = new URLSearchParams();
+  if (state.activeBarbershopId) params.set("barbershopId", state.activeBarbershopId);
+  const response = await api(`/schedules/business-hours?${params.toString()}`);
   renderBusinessHours(response.data || []);
 }
 
@@ -227,6 +275,7 @@ function renderBusinessHours(hours) {
 }
 
 function renderMetrics() {
+  document.querySelector("#metricBarbershops").textContent = state.barbershops.length;
   document.querySelector("#metricServices").textContent = state.services.length;
   document.querySelector("#metricBarbers").textContent = state.barbers.length;
   document.querySelector("#metricBookings").textContent = state.bookings.length;
@@ -276,6 +325,14 @@ function resetServiceForm() {
   showMessage(document.querySelector("#serviceMessage"), "");
 }
 
+function resetBarbershopForm() {
+  document.querySelector("#barbershopForm").reset();
+  document.querySelector("#barbershopId").value = "";
+  document.querySelector("#barbershopActive").checked = true;
+  document.querySelector("#barbershopFormTitle").textContent = "Nova barbearia";
+  showMessage(document.querySelector("#barbershopMessage"), "");
+}
+
 el.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   showMessage(el.loginMessage, "Entrando...");
@@ -312,6 +369,16 @@ document.querySelectorAll(".nav-item").forEach((button) => {
   button.addEventListener("click", () => setView(button.dataset.view));
 });
 
+document.querySelector("#activeBarbershop").addEventListener("change", async (event) => {
+  state.activeBarbershopId = event.target.value;
+  localStorage.setItem("barbearia_admin_active_shop", state.activeBarbershopId);
+  resetServiceForm();
+  await Promise.all([loadServices(), loadBarbers(), loadBusinessHours()]);
+  await loadSettings();
+  await loadAgenda(document.querySelector("#agendaDate").value, "");
+});
+
+document.querySelector("#refreshBarbershops").addEventListener("click", loadBarbershops);
 document.querySelector("#refreshServices").addEventListener("click", loadServices);
 document.querySelector("#refreshBarbers").addEventListener("click", loadBarbers);
 document.querySelector("#refreshAgenda").addEventListener("click", () => {
@@ -321,12 +388,64 @@ document.querySelector("#dashboardDate").addEventListener("change", (event) => {
   loadAgenda(event.target.value, "");
 });
 
+document.querySelector("#barbershopForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const id = document.querySelector("#barbershopId").value;
+  const message = document.querySelector("#barbershopMessage");
+
+  const payload = {
+    name: document.querySelector("#barbershopName").value,
+    city: document.querySelector("#barbershopCity").value,
+    state: document.querySelector("#barbershopState").value.toUpperCase(),
+    phone: document.querySelector("#barbershopPhone").value || null,
+    address: document.querySelector("#barbershopAddress").value || null,
+    isActive: document.querySelector("#barbershopActive").checked
+  };
+
+  try {
+    const response = await api(id ? `/barbershops/${id}` : "/barbershops", {
+      method: id ? "PATCH" : "POST",
+      body: JSON.stringify(payload)
+    });
+    showMessage(message, response.message || "Barbearia salva.");
+    if (!id && response.data?.id) {
+      state.activeBarbershopId = response.data.id;
+      localStorage.setItem("barbearia_admin_active_shop", state.activeBarbershopId);
+    }
+    resetBarbershopForm();
+    await loadBarbershops();
+    await Promise.all([loadServices(), loadBarbers(), loadBusinessHours()]);
+  } catch (error) {
+    showMessage(message, error.message, true);
+  }
+});
+
+document.querySelector("#clearBarbershopForm").addEventListener("click", resetBarbershopForm);
+
+document.querySelector("#barbershopsTable").addEventListener("click", (event) => {
+  const id = event.target.dataset.editBarbershop;
+  if (!id) return;
+
+  const shop = state.barbershops.find((item) => item.id === id);
+  if (!shop) return;
+
+  document.querySelector("#barbershopId").value = shop.id;
+  document.querySelector("#barbershopName").value = shop.name;
+  document.querySelector("#barbershopCity").value = shop.city;
+  document.querySelector("#barbershopState").value = shop.state;
+  document.querySelector("#barbershopPhone").value = shop.phone || "";
+  document.querySelector("#barbershopAddress").value = shop.address || "";
+  document.querySelector("#barbershopActive").checked = shop.isActive;
+  document.querySelector("#barbershopFormTitle").textContent = "Editar barbearia";
+});
+
 document.querySelector("#serviceForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const id = document.querySelector("#serviceId").value;
   const message = document.querySelector("#serviceMessage");
 
   const payload = {
+    barbershopId: state.activeBarbershopId,
     name: document.querySelector("#serviceName").value,
     description: document.querySelector("#serviceDescription").value,
     price: Number(document.querySelector("#servicePrice").value),
@@ -370,6 +489,7 @@ document.querySelector("#barberForm").addEventListener("submit", async (event) =
   const message = document.querySelector("#barberMessage");
 
   const payload = {
+    barbershopId: state.activeBarbershopId,
     name: document.querySelector("#barberName").value,
     publicName: document.querySelector("#barberPublicName").value,
     email: document.querySelector("#barberEmail").value,
@@ -403,7 +523,7 @@ document.querySelector("#saveBusinessHours").addEventListener("click", async () 
   try {
     await api("/schedules/business-hours", {
       method: "PUT",
-      body: JSON.stringify({ hours })
+      body: JSON.stringify({ barbershopId: state.activeBarbershopId, hours })
     });
     showMessage(message, "Horários salvos.");
     await loadBusinessHours();
@@ -418,6 +538,7 @@ document.querySelector("#blockForm").addEventListener("submit", async (event) =>
   const barberId = document.querySelector("#blockBarber").value;
 
   const payload = {
+    barbershopId: state.activeBarbershopId,
     barberId: barberId || null,
     date: document.querySelector("#blockDate").value,
     startsAt: document.querySelector("#blockStart").value,
@@ -440,6 +561,7 @@ document.querySelector("#settingsForm").addEventListener("submit", async (event)
   const message = document.querySelector("#settingsMessage");
   const payload = {
     businessName: document.querySelector("#businessName").value,
+    barbershopId: state.activeBarbershopId,
     phone: document.querySelector("#businessPhone").value,
     address: document.querySelector("#businessAddress").value,
     cancellationLimitMinutes: Number(document.querySelector("#cancelLimit").value),
