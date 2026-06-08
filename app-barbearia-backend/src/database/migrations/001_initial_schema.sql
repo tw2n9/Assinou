@@ -37,6 +37,18 @@ CREATE TABLE IF NOT EXISTS clients (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS barbershops (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(160) NOT NULL,
+  city VARCHAR(120) NOT NULL,
+  state VARCHAR(2) NOT NULL,
+  address TEXT NULL,
+  phone VARCHAR(30) NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS barbers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES users(id),
@@ -165,6 +177,108 @@ END $$;
 INSERT INTO settings (business_name, cancellation_limit_minutes, default_slot_interval_minutes, cancellation_policy_text)
 SELECT 'Nome da Barbearia', 120, 30, 'Cancelamentos permitidos ate 2 horas antes do horario.'
 WHERE NOT EXISTS (SELECT 1 FROM settings);
+
+INSERT INTO barbershops (name, city, state, address, phone)
+SELECT
+  COALESCE((SELECT business_name FROM settings ORDER BY created_at LIMIT 1), 'Nome da Barbearia'),
+  'Rancharia',
+  'SP',
+  (SELECT address FROM settings ORDER BY created_at LIMIT 1),
+  (SELECT phone FROM settings ORDER BY created_at LIMIT 1)
+WHERE NOT EXISTS (SELECT 1 FROM barbershops);
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+ALTER TABLE services
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+ALTER TABLE barbers
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+ALTER TABLE business_hours
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+ALTER TABLE schedule_blocks
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+ALTER TABLE settings
+  ADD COLUMN IF NOT EXISTS barbershop_id UUID NULL REFERENCES barbershops(id);
+
+UPDATE users
+SET barbershop_id = (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+WHERE role IN ('admin', 'barber') AND barbershop_id IS NULL;
+
+UPDATE services
+SET barbershop_id = (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+WHERE barbershop_id IS NULL;
+
+UPDATE barbers
+SET barbershop_id = (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+WHERE barbershop_id IS NULL;
+
+UPDATE business_hours
+SET barbershop_id = (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+WHERE barbershop_id IS NULL;
+
+UPDATE schedule_blocks
+SET barbershop_id = COALESCE(
+  (SELECT br.barbershop_id FROM barbers br WHERE br.id = schedule_blocks.barber_id),
+  (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+)
+WHERE barbershop_id IS NULL;
+
+UPDATE bookings
+SET barbershop_id = COALESCE(
+  (SELECT br.barbershop_id FROM barbers br WHERE br.id = bookings.barber_id),
+  (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+)
+WHERE barbershop_id IS NULL;
+
+UPDATE settings
+SET barbershop_id = (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)
+WHERE barbershop_id IS NULL;
+
+ALTER TABLE services
+  ALTER COLUMN barbershop_id SET NOT NULL;
+
+ALTER TABLE barbers
+  ALTER COLUMN barbershop_id SET NOT NULL;
+
+ALTER TABLE business_hours
+  ALTER COLUMN barbershop_id SET NOT NULL;
+
+ALTER TABLE schedule_blocks
+  ALTER COLUMN barbershop_id SET NOT NULL;
+
+ALTER TABLE bookings
+  ALTER COLUMN barbershop_id SET NOT NULL;
+
+ALTER TABLE settings
+  ALTER COLUMN barbershop_id SET NOT NULL;
+
+ALTER TABLE business_hours
+  DROP CONSTRAINT IF EXISTS business_hours_weekday_key;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'business_hours_barbershop_weekday_key'
+  ) THEN
+    ALTER TABLE business_hours
+      ADD CONSTRAINT business_hours_barbershop_weekday_key UNIQUE (barbershop_id, weekday);
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_users_barbershop ON users(barbershop_id);
+CREATE INDEX IF NOT EXISTS idx_barbershops_city_state ON barbershops(city, state);
+CREATE INDEX IF NOT EXISTS idx_barbershops_active ON barbershops(is_active);
+CREATE INDEX IF NOT EXISTS idx_barbers_barbershop ON barbers(barbershop_id);
+CREATE INDEX IF NOT EXISTS idx_services_barbershop ON services(barbershop_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_barbershop ON bookings(barbershop_id);
 
 ALTER TABLE barbers
   ADD COLUMN IF NOT EXISTS default_service_duration_minutes INTEGER NULL;

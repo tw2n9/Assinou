@@ -10,6 +10,7 @@ type RequestUser = {
 };
 
 type CreateBookingInput = {
+  barbershopId?: string;
   barberId: string;
   serviceId: string;
   date: string;
@@ -29,9 +30,21 @@ export async function createBooking(userId: string, input: CreateBookingInput) {
     const bookingClient = clientResult.rows[0];
     if (!bookingClient) throw new HttpError(404, "CLIENT_NOT_FOUND", "Cliente nao encontrado");
 
+    const barberResult = await databaseQuery<{ barbershop_id: string }>(
+      "SELECT barbershop_id FROM barbers WHERE id = $1 AND is_active = true",
+      [input.barberId]
+    );
+    const barber = barberResult.rows[0];
+    if (!barber) throw new HttpError(404, "BARBER_NOT_FOUND", "Barbeiro nao encontrado");
+
+    const barbershopId = input.barbershopId ?? barber.barbershop_id;
+    if (barber.barbershop_id !== barbershopId) {
+      throw new HttpError(409, "BARBERSHOP_MISMATCH", "Barbeiro nao pertence a esta barbearia");
+    }
+
     const serviceResult = await databaseQuery<{ price: number; duration_minutes: number }>(
-      "SELECT price::float, duration_minutes FROM services WHERE id = $1 AND is_active = true",
-      [input.serviceId]
+      "SELECT price::float, duration_minutes FROM services WHERE id = $1 AND barbershop_id = $2 AND is_active = true",
+      [input.serviceId, barbershopId]
     );
     const service = serviceResult.rows[0];
     if (!service) throw new HttpError(404, "SERVICE_NOT_FOUND", "Servico nao encontrado");
@@ -44,12 +57,12 @@ export async function createBooking(userId: string, input: CreateBookingInput) {
     const endsAt = addMinutes(input.startsAt, service.duration_minutes);
 
     const result = await databaseQuery(
-      `INSERT INTO bookings (client_id, barber_id, service_id, date, starts_at, ends_at, status, price_snapshot)
-       VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7)
+      `INSERT INTO bookings (barbershop_id, client_id, barber_id, service_id, date, starts_at, ends_at, status, price_snapshot)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'scheduled', $8)
        RETURNING id, barber_id AS "barberId", service_id AS "serviceId",
                  date, starts_at AS "startsAt", ends_at AS "endsAt",
                  status, price_snapshot::float AS "priceSnapshot"`,
-      [bookingClient.id, input.barberId, input.serviceId, input.date, input.startsAt, endsAt, service.price]
+      [barbershopId, bookingClient.id, input.barberId, input.serviceId, input.date, input.startsAt, endsAt, service.price]
     );
 
     await client.query("COMMIT");

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { barberRoutes } from "./modules/barbers/barbers.routes";
+import { barbershopRoutes } from "./modules/barbershops/barbershops.routes";
 import { bookingRoutes } from "./modules/bookings/bookings.routes";
 import { clientRoutes } from "./modules/clients/clients.routes";
 import { notificationRoutes } from "./modules/notifications/notifications.routes";
@@ -12,6 +13,7 @@ import { userRoutes } from "./modules/users/users.routes";
 export const routes = Router();
 
 routes.use("/auth", authRoutes);
+routes.use("/barbershops", barbershopRoutes);
 routes.use("/users", userRoutes);
 routes.use("/services", serviceRoutes);
 routes.use("/barbers", barberRoutes);

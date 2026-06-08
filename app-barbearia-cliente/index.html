@@ -61,6 +61,20 @@
 
       <article id="nextBookingCard" class="highlight-card"></article>
 
+      <section class="panel finder-panel">
+        <div class="step-heading">
+          <span>1</span>
+          <h2>Escolha a barbearia</h2>
+        </div>
+        <div class="finder-grid">
+          <label>Cidade<input id="citySearch" placeholder="Ex: Rancharia"></label>
+          <label>UF<input id="stateSearch" maxlength="2" placeholder="SP"></label>
+          <button id="findBarbershops" class="button secondary" type="button">Buscar</button>
+        </div>
+        <div id="barbershopsList" class="card-list"></div>
+        <p id="barbershopMessage" class="form-message"></p>
+      </section>
+
       <div class="quick-actions">
         <button class="action-card" data-view-target="booking">
           <strong>Agendar</strong>
@@ -108,6 +122,7 @@
         <aside class="panel summary-panel">
           <h2>Resumo</h2>
           <dl>
+            <div><dt>Barbearia</dt><dd id="summaryBarbershop">-</dd></div>
             <div><dt>Serviço</dt><dd id="summaryService">-</dd></div>
             <div><dt>Barbeiro</dt><dd id="summaryBarber">-</dd></div>
             <div><dt>Data</dt><dd id="summaryDate">-</dd></div>

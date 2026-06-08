@@ -21,6 +21,17 @@ body {
   background: var(--bg);
 }
 
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 button,
 input {
   font: inherit;
@@ -129,6 +140,7 @@ input {
 .auth-form.active,
 .stack-form {
   display: grid;
+  animation: view-in 180ms ease-out;
 }
 
 label {
@@ -231,6 +243,7 @@ input:focus {
 
 .view.active {
   display: block;
+  animation: view-in 220ms ease-out;
 }
 
 .page-heading {
@@ -268,6 +281,20 @@ h2 {
   max-width: 760px;
   margin-bottom: 18px;
   padding: 20px;
+}
+
+.finder-panel {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+  margin-bottom: 18px;
+}
+
+.finder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px auto;
+  gap: 12px;
+  align-items: end;
 }
 
 .highlight-card strong {
@@ -359,6 +386,14 @@ h2 {
   background: #fff;
   text-align: left;
   cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.select-card:hover,
+.action-card:hover,
+.button:hover,
+.bottom-item:hover {
+  transform: translateY(-1px);
 }
 
 .select-card.active {
@@ -482,11 +517,21 @@ dd {
 @media (max-width: 860px) {
   .auth-shell,
   .booking-layout,
+  .finder-grid,
   .quick-actions {
     grid-template-columns: 1fr;
   }
 
   .summary-panel {
     position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
   }
 }

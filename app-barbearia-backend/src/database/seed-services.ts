@@ -12,9 +12,14 @@ const services = [
 async function seedServices() {
   for (const [name, description, price, durationMinutes] of services) {
     await query(
-      `INSERT INTO services (name, description, price, duration_minutes, is_active)
-       SELECT $1::varchar, $2::text, $3::numeric, $4::integer, true
-       WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = $1::varchar)`,
+      `INSERT INTO services (barbershop_id, name, description, price, duration_minutes, is_active)
+       SELECT b.id, $1::varchar, $2::text, $3::numeric, $4::integer, true
+       FROM barbershops b
+       WHERE NOT EXISTS (
+         SELECT 1 FROM services s WHERE s.barbershop_id = b.id AND s.name = $1::varchar
+       )
+       ORDER BY b.created_at
+       LIMIT 1`,
       [name, description, price, durationMinutes]
     );
   }

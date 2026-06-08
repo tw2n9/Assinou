@@ -86,8 +86,8 @@ export async function registerBarber(input: RegisterBarberInput) {
   const user = userResult.rows[0];
 
   await query(
-    `INSERT INTO barbers (user_id, public_name, specialty, is_active)
-     VALUES ($1, $2, $3, true)`,
+    `INSERT INTO barbers (barbershop_id, user_id, public_name, specialty, is_active)
+     VALUES ((SELECT id FROM barbershops ORDER BY created_at LIMIT 1), $1, $2, $3, true)`,
     [user.id, input.publicName, input.specialty ?? null]
   );
 

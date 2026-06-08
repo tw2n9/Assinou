@@ -139,6 +139,7 @@ scheduleRoutes.put("/barbers/:barberId/working-hours", requireRole("admin"), asy
 
 scheduleRoutes.get("/availability", asyncHandler(async (req, res) => {
   const payload = z.object({
+    barbershopId: z.string().uuid().optional(),
     barberId: z.string().uuid(),
     serviceId: z.string().uuid(),
     date: z.string()

@@ -10,6 +10,7 @@ export const bookingRoutes = Router();
 bookingRoutes.use(requireAuth);
 
 const createBookingSchema = z.object({
+  barbershopId: z.string().uuid().optional(),
   barberId: z.string().uuid(),
   serviceId: z.string().uuid(),
   date: z.string(),

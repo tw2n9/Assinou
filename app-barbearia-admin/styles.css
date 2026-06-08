@@ -22,6 +22,17 @@ body {
   background: var(--bg);
 }
 
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 button,
 input,
 select,
@@ -273,6 +284,13 @@ textarea:focus {
 
 .view.active {
   display: block;
+  animation: view-in 220ms ease-out;
+}
+
+.login-panel,
+.panel,
+.metric-card {
+  animation: view-in 180ms ease-out;
 }
 
 .metric-grid {
@@ -484,5 +502,14 @@ th {
   .two-cols,
   .hour-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
   }
 }

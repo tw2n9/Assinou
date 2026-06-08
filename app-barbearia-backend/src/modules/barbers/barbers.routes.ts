@@ -76,14 +76,16 @@ barberRoutes.patch("/me", requireRole("barber"), asyncHandler(async (req, res) =
 
 barberRoutes.get("/", asyncHandler(async (req, res) => {
   const includeInactive = req.user!.role === "admin" && req.query.includeInactive === "true";
+  const barbershopId = typeof req.query.barbershopId === "string" ? req.query.barbershopId : null;
   const result = await query(
     `SELECT id, public_name AS "publicName", specialty, photo_url AS "photoUrl",
             default_service_duration_minutes AS "defaultServiceDurationMinutes",
             is_active AS "isActive"
      FROM barbers
      WHERE ($1::boolean = true OR is_active = true)
+       AND ($2::uuid IS NULL OR barbershop_id = $2)
      ORDER BY public_name`,
-    [includeInactive]
+    [includeInactive, barbershopId]
   );
   res.json({ data: result.rows });
 }));
@@ -102,12 +104,15 @@ barberRoutes.post("/", requireRole("admin"), asyncHandler(async (req, res) => {
   );
 
   const result = await query(
-    `INSERT INTO barbers (user_id, public_name, specialty, is_active)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO barbers (barbershop_id, user_id, public_name, specialty, is_active)
+     VALUES (
+       COALESCE((SELECT barbershop_id FROM users WHERE id = $1), (SELECT id FROM barbershops ORDER BY created_at LIMIT 1)),
+       $2, $3, $4, $5
+     )
      RETURNING id, user_id AS "userId", public_name AS "publicName", specialty, photo_url AS "photoUrl",
                default_service_duration_minutes AS "defaultServiceDurationMinutes",
                is_active AS "isActive"`,
-    [userResult.rows[0].id, payload.publicName, payload.specialty ?? null, payload.isActive ?? true]
+    [req.user!.id, userResult.rows[0].id, payload.publicName, payload.specialty ?? null, payload.isActive ?? true]
   );
 
   res.status(201).json({ data: result.rows[0], message: "Barbeiro criado" });
