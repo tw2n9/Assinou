@@ -1,5 +1,5 @@
 const API_URL = window.BARBEARIA_API_URL || localStorage.getItem("barbearia_api_url") || "http://localhost:3000/api/v1";
-const WHATSAPP_URL = window.ASSINOU_WHATSAPP_URL || "https://wa.me/5500000000000?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Assinou";
+const WHATSAPP_URL = window.ASSINOU_WHATSAPP_URL || "";
 
 const state = {
   token: localStorage.getItem("barbearia_cliente_token"),
