@@ -41,6 +41,17 @@ function showMessage(element, message, isError = false) {
   element.classList.toggle("error", isError);
 }
 
+function setAuthPanel(panel) {
+  document.querySelectorAll(".auth-tab").forEach((button) => {
+    button.classList.toggle("active", button.dataset.authPanel === panel);
+  });
+
+  document.querySelector("#loginForm").classList.toggle("active", panel === "login");
+  document.querySelector("#registerForm").classList.toggle("active", panel === "register");
+  showMessage(document.querySelector("#loginMessage"), "");
+  showMessage(document.querySelector("#registerMessage"), "");
+}
+
 function updateAuthView() {
   if (state.token) {
     document.querySelector("#loginView").classList.add("hidden");
@@ -266,6 +277,10 @@ function logout() {
   localStorage.removeItem("barbearia_barbeiro_token");
   updateAuthView();
 }
+
+document.querySelectorAll(".auth-tab").forEach((button) => {
+  button.addEventListener("click", () => setAuthPanel(button.dataset.authPanel));
+});
 
 document.querySelector("#loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();

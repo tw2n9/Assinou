@@ -11,25 +11,39 @@
 </head>
 <body>
   <main id="loginView" class="login-shell">
+    <section class="login-copy" aria-labelledby="barberHeroTitle">
+      <p class="eyebrow">Painel do barbeiro</p>
+      <h1 id="barberHeroTitle">Agenda clara para atender melhor.</h1>
+      <p>Veja reservas do dia, acompanhe status dos atendimentos e organize seus horários de trabalho em um só lugar.</p>
+      <div class="hero-proof">
+        <span>Agenda diária</span>
+        <span>Horários editáveis</span>
+        <span>Controle de presença</span>
+      </div>
+    </section>
+
     <section class="login-card">
       <div class="brand">
-        <span class="brand-mark">B</span>
+        <span class="brand-mark">A</span>
         <div>
           <strong>Assinou</strong>
           <span>Agenda e atendimentos</span>
         </div>
       </div>
 
-      <form id="loginForm" class="stack-form">
+      <div class="auth-tabs" aria-label="Acesso do barbeiro">
+        <button class="auth-tab active" type="button" data-auth-panel="login">Entrar</button>
+        <button class="auth-tab" type="button" data-auth-panel="register">Criar conta</button>
+      </div>
+
+      <form id="loginForm" class="stack-form auth-pane active">
         <label>E-mail<input id="loginEmail" type="email" required></label>
         <label>Senha<input id="loginPassword" type="password" required></label>
         <button class="button primary" type="submit">Entrar</button>
         <p id="loginMessage" class="form-message"></p>
       </form>
 
-      <div class="auth-divider"></div>
-
-      <form id="registerForm" class="stack-form">
+      <form id="registerForm" class="stack-form auth-pane">
         <h2>Criar conta de barbeiro</h2>
         <label>Nome completo<input id="registerName" type="text" required></label>
         <label>Nome publico<input id="registerPublicName" type="text" required></label>
@@ -45,7 +59,7 @@
   <main id="appView" class="app-shell hidden">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark">B</span>
+        <span class="brand-mark">A</span>
         <div>
           <strong id="barberName">Barbeiro</strong>
           <span>Agenda do dia</span>
